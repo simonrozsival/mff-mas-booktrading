@@ -3,6 +3,6 @@ Book trading agent using [JADE](http://jade.tilab.com/) for [MAS](https://martin
 
 ## Team members:
 - [Karel Tuček](https://github.com/kareltucek)
-- [Tomáš Isser](https://github.com/tomasiser)
+- [Tomáš Iser](https://github.com/tomasiser)
 - [Tomáš Novotný](https://github.com/kareltucek)
 - [Šimon Rozsíval](https://github.com/simonrozsival)
