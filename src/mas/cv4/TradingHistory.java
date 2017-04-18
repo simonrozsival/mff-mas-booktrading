@@ -61,4 +61,10 @@ public class TradingHistory {
         return false;
     }
 
+    /** we can choose only one offer -> choose the one with highest rating if shouldAccept returns true for more than one */
+    public double rateOffer(Offer o) {
+        // @todo
+        return 0;
+    }
+
 }

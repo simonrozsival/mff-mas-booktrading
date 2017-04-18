@@ -34,6 +34,7 @@ public class BookTrader extends Agent {
 
     // The logic
     TradingLogic logic;
+    TradingHistory history;
 
     Codec codec = new SLCodec();
     Ontology onto = BookOntology.getInstance();
@@ -210,9 +211,11 @@ public class BookTrader extends Agent {
                     ArrayList<BookInfo> bis = new ArrayList<BookInfo>();
 
                     //choose a book from goals to buy
-                    BookInfo bi = new BookInfo();
-                    bi.setBookName(myGoal.get(rnd.nextInt(myGoal.size())).getBook().getBookName());
-                    bis.add(bi);
+                    for(int i = 0; i < myGoal.size(); i++) {
+                        BookInfo bi = new BookInfo();
+                        bi.setBookName(myGoal.get(i).getBook().getBookName());
+                        bis.add(bi);
+                    }
 
                     SellMeBooks smb = new SellMeBooks();
                     smb.setBooks(bis);
@@ -302,7 +305,9 @@ public class BookTrader extends Agent {
                 Iterator it = responses.iterator();
 
                 //we need to accept only one offer, otherwise we create two transactions with the same ID
-                boolean accepted = false;
+                double score = 0;
+                Offer bestOffer = null;
+
                 while (it.hasNext()) {
                     ACLMessage response = (ACLMessage)it.next();
 
@@ -347,28 +352,61 @@ public class BookTrader extends Agent {
                             }
                         }
 
-                        //if none, we REJECT the proposal, we also reject all proposal if we already accepted one
-                        if (canFulfill.size() == 0 || accepted) {
+
+                        boolean chosen = false;
+
+                        for (Offer o: canFulfill) {
+                            double offerScore = history.rateOffer(o);
+                            if(history.shouldAccept(o) && (!chosen || offerScore > score))
+                            {
+                                chosen = true;
+                                score = offerScore;
+                                bestOffer = o;
+                            }
+                        }
+
+
+                    } catch (Codec.CodecException e) {
+                        e.printStackTrace();
+                    } catch (OntologyException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+                it = responses.iterator();
+                while (it.hasNext()) {
+                    ACLMessage response = (ACLMessage)it.next();
+
+                    ContentElement ce = null;
+                    try {
+                        if (response.getPerformative() == ACLMessage.REFUSE) {
+                            continue;
+                        }
+                        ce = getContentManager().extractContent(response);
+                        ChooseFrom cf = (ChooseFrom)ce;
+                        ArrayList<Offer> offers = cf.getOffers();
+
+                        if(offers.contains(bestOffer))
+                        {
+                            ACLMessage acc = response.createReply();
+                            acc.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                            Chosen ch = new Chosen();
+                            ch.setOffer(bestOffer);
+
+                            c=ch;
+                            shouldReceive = cf.getWillSell();
+
+                            getContentManager().fillContent(acc, ch);
+                            acceptances.add(acc);
+                        }
+                        else
+                        {
                             ACLMessage acc = response.createReply();
                             acc.setPerformative(ACLMessage.REJECT_PROPOSAL);
                             acceptances.add(acc);
                             continue;
                         }
-
-                        ACLMessage acc = response.createReply();
-                        acc.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                        accepted = true;
-
-                        //choose an offer
-                        Chosen ch = new Chosen();
-                        ch.setOffer(canFulfill.get(rnd.nextInt(canFulfill.size())));
-
-                        c=ch;
-                        shouldReceive = cf.getWillSell();
-
-                        getContentManager().fillContent(acc, ch);
-                        acceptances.add(acc);
-
                     } catch (Codec.CodecException e) {
                         e.printStackTrace();
                     } catch (OntologyException e) {
@@ -395,7 +433,6 @@ public class BookTrader extends Agent {
         }
 
         class SellBookResponder extends SSContractNetResponder {
-
             public SellBookResponder(Agent a, ACLMessage cfp) {
                 super(a, cfp);
             }
@@ -407,43 +444,22 @@ public class BookTrader extends Agent {
                     Action ac = (Action)getContentManager().extractContent(cfp);
 
                     SellMeBooks smb = (SellMeBooks)ac.getAction();
-                    ArrayList<BookInfo> books = smb.getBooks();
 
-                    ArrayList<BookInfo> sellBooks = new ArrayList<BookInfo>();
 
-                    //find out, if we have books the agent wants
-                    for (int i = 0; i < books.size(); i++) {
-                        boolean found = false;
-                        for (int j = 0; j < myBooks.size(); j++) {
-                            if (myBooks.get(j).getBookName().equals(books.get(i).getBookName())) {
-                                sellBooks.add(myBooks.get(j));
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found)
-                            throw new RefuseException("");
-                    }
+                    ServiceDescription sd = new ServiceDescription();
+                    sd.setType("environment");
+                    DFAgentDescription dfd = new DFAgentDescription();
+                    dfd.addServices(sd);
 
-                    //create two offers
-                    Offer o1 = new Offer();
-                    o1.setMoney(100);
+                    DFAgentDescription[] envs = DFService.search(myAgent, cfp.getSender(), dfd);
 
-                    ArrayList<BookInfo> bis = new ArrayList<BookInfo>();
-                    bis.add(myGoal.get(rnd.nextInt(myGoal.size())).getBook());
-
-                    Offer o2 = new Offer();
-                    o2.setBooks(bis);
-                    o2.setMoney(20);
+                    Offer ourOffer = logic.makeOffer(envs[0], smb);
 
                     ArrayList<Offer> offers = new ArrayList<Offer>();
-                    offers.add(o1);
-                    offers.add(o2);
-
+                    offers.add(ourOffer);
                     ChooseFrom cf = new ChooseFrom();
-
-                    cf.setWillSell(sellBooks);
                     cf.setOffers(offers);
+                    cf.setWillSell(myBooks);
 
                     //send the offers
                     ACLMessage reply = cfp.createReply();
@@ -457,6 +473,8 @@ public class BookTrader extends Agent {
                 } catch (Codec.CodecException e) {
                     e.printStackTrace();
                 } catch (OntologyException e) {
+                    e.printStackTrace();
+                } catch (FIPAException e) {
                     e.printStackTrace();
                 }
 
@@ -541,6 +559,8 @@ public class BookTrader extends Agent {
                     ACLMessage getMyInfo = new ACLMessage(ACLMessage.REQUEST);
                     getMyInfo.setLanguage(codec.getName());
                     getMyInfo.setOntology(onto.getName());
+
+
 
                     ServiceDescription sd = new ServiceDescription();
                     sd.setType("environment");
