@@ -399,9 +399,14 @@ public class BookTrader extends Agent {
 
                             getContentManager().fillContent(acc, ch);
                             acceptances.add(acc);
+
+                            for(Offer o : offers)
+                                history.logBuyFrom(o, o.equals(bestOffer));
                         }
                         else
                         {
+                            for(Offer o : offers)
+                                history.logBuyFrom(o, false);
                             ACLMessage acc = response.createReply();
                             acc.setPerformative(ACLMessage.REJECT_PROPOSAL);
                             acceptances.add(acc);
@@ -510,6 +515,11 @@ public class BookTrader extends Agent {
                     mt.setReceivingBooks(c.getOffer().getBooks());
                     mt.setReceivingMoney(c.getOffer().getMoney());
 
+                    for(Offer o : cf.getOffers())
+                    {
+                        history.logSellTo(o, c.getOffer().equals(o));
+                    }
+
                     ServiceDescription sd = new ServiceDescription();
                     sd.setType("environment");
                     DFAgentDescription dfd = new DFAgentDescription();
@@ -542,6 +552,25 @@ public class BookTrader extends Agent {
                 }
 
                 throw new FailureException("");
+            }
+
+            @Override
+            protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
+                try {
+                    ChooseFrom cf = (ChooseFrom) getContentManager().extractContent(propose);
+
+                    for(Offer o : cf.getOffers())
+                    {
+                        history.logSellTo(o, false);
+                    }
+
+                } catch (UngroundedException e) {
+                    e.printStackTrace();
+                } catch (OntologyException e) {
+                    e.printStackTrace();
+                } catch (Codec.CodecException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
