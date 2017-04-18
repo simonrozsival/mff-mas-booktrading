@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="mff-mas-booktrading">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/build/libs/mff-mas-booktrading.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

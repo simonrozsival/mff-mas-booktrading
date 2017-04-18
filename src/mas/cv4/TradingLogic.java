@@ -44,7 +44,7 @@ public class TradingLogic {
         updateInfo(info);        
         traders = new  HashMap<AID, TradingHistory>();
         for (DFAgentDescription trader : others) {
-            traders.put(trader.getName(), new TradingHistory(trader));
+            traders.put(trader.getName(), new TradingHistory());
         }
     }
 
@@ -64,6 +64,7 @@ public class TradingLogic {
         traders.get(agent).logBuyFrom(offer, accepted);
     }
 
+    private int nextBookToSell = 0;
 
     /**
      * Choose book(s) which I could request from the other agents.
@@ -73,11 +74,10 @@ public class TradingLogic {
         List<Goal> myGoal = ai.getGoals();
 
         // @todo choose a book from goals to buy
-        for (int i = 0; i < myGoal.size(); i++) {
-            BookInfo bi = new BookInfo();
-            bi.setBookName(myGoal.get(i).getBook().getBookName());
-            bis.add(bi);
-        }
+        int i = nextBookToSell++ % myGoal.size();
+        BookInfo bi = new BookInfo();
+        bi.setBookName(myGoal.get(i).getBook().getBookName());
+        bis.add(bi);
 
         SellMeBooks smb = new SellMeBooks();
         smb.setBooks(bis);
@@ -189,7 +189,7 @@ public class TradingLogic {
      * Should I accept the offer??
      */
     private boolean shouldAccept(AID agent, Offer offer) {
-        return traders.get(agent).shouldAccept(offer);
+        return traders.get(agent).shouldAccept(offer, ai.getGoals(), calculateProfit(offer));
     }
 
     /**
