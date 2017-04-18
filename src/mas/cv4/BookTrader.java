@@ -32,6 +32,9 @@ import java.util.*;
  */
 public class BookTrader extends Agent {
 
+    // The logic
+    TradingLogic logic;
+
     Codec codec = new SLCodec();
     Ontology onto = BookOntology.getInstance();
 
@@ -123,13 +126,31 @@ public class BookTrader extends Agent {
                     Result res = (Result)getContentManager().extractContent(myInfo);
 
                     AgentInfo ai = (AgentInfo)res.getValue();
+                    
+                    ///
+                    /// Setup logic
+                    ///
+
+
+                    // all the traders must be registered by now
+                    ServiceDescription sd = new ServiceDescription();
+                    sd.setType("book-trader");
+                    DFAgentDescription dfd = new DFAgentDescription();
+                    dfd.addServices(sd);
+                    DFAgentDescription[] traders = DFService.search(myAgent, dfd);
+
+                    logic = new TradingLogic(ai, traders);
+
+                    ///
+                    ///
+                    ///
 
                     myBooks = ai.getBooks();
                     myGoal = ai.getGoals();
                     myMoney = ai.getMoney();
 
                     //add a behavior which tries to buy a book every two seconds
-                    addBehaviour(new TradingBehaviour(myAgent, 2000));
+                    addBehaviour(new TradingBehaviour(myAgent, 1000));
 
                     //add a behavior which sells book to other agents
                     addBehaviour(new SellBook(myAgent, MessageTemplate.MatchPerformative(ACLMessage.CFP)));
