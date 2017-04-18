@@ -34,7 +34,6 @@ public class BookTrader extends Agent {
 
     // The logic
     TradingLogic logic;
-    TradingHistory history;
 
     Codec codec = new SLCodec();
     Ontology onto = BookOntology.getInstance();
@@ -188,7 +187,6 @@ public class BookTrader extends Agent {
             protected void onTick() {
 
                 try {
-
                     //find other seller and prepare a CFP
                     ServiceDescription sd = new ServiceDescription();
                     sd.setType("book-trader");
@@ -208,18 +206,7 @@ public class BookTrader extends Agent {
                         buyBook.addReceiver(dfad.getName());
                     }
 
-                    ArrayList<BookInfo> bis = new ArrayList<BookInfo>();
-
-                    //choose a book from goals to buy
-                    for(int i = 0; i < myGoal.size(); i++) {
-                        BookInfo bi = new BookInfo();
-                        bi.setBookName(myGoal.get(i).getBook().getBookName());
-                        bis.add(bi);
-                    }
-
-                    SellMeBooks smb = new SellMeBooks();
-                    smb.setBooks(bis);
-
+                    SellMeBooks smb = logic.makeRequest();
                     getContentManager().fillContent(buyBook, new Action(myAgent.getAID(), smb));
                     addBehaviour(new ObtainBook(myAgent, buyBook));
                 } catch (Codec.CodecException e) {
@@ -305,12 +292,10 @@ public class BookTrader extends Agent {
                 Iterator it = responses.iterator();
 
                 //we need to accept only one offer, otherwise we create two transactions with the same ID
-                double score = 0;
                 Offer bestOffer = null;
 
                 while (it.hasNext()) {
                     ACLMessage response = (ACLMessage)it.next();
-
                     ContentElement ce = null;
                     try {
                         if (response.getPerformative() == ACLMessage.REFUSE) {
@@ -318,54 +303,9 @@ public class BookTrader extends Agent {
                         }
 
                         ce = getContentManager().extractContent(response);
-
                         ChooseFrom cf = (ChooseFrom)ce;
-
                         ArrayList<Offer> offers = cf.getOffers();
-
-                        //find out which offers we can fulfill (we have all requested books and enough money)
-                        ArrayList<Offer> canFulfill = new ArrayList<Offer>();
-                        for (Offer o: offers) {
-                            if (o.getMoney() > myMoney)
-                                continue;
-
-                            boolean foundAll = true;
-                            if (o.getBooks() != null)
-                                for (BookInfo bi : o.getBooks()) {
-                                    String bn = bi.getBookName();
-                                    boolean found = false;
-                                    for (int j = 0; j < myBooks.size(); j++) {
-                                        if (myBooks.get(j).getBookName().equals(bn)) {
-                                            found = true;
-                                            bi.setBookID(myBooks.get(j).getBookID());
-                                            break;
-                                        }
-                                    }
-                                    if (!found) {
-                                        foundAll = false;
-                                        break;
-                                    }
-                                }
-
-                            if (foundAll) {
-                                canFulfill.add(o);
-                            }
-                        }
-
-
-                        boolean chosen = false;
-
-                        for (Offer o: canFulfill) {
-                            double offerScore = history.rateOffer(o);
-                            if(history.shouldAccept(o) && (!chosen || offerScore > score))
-                            {
-                                chosen = true;
-                                score = offerScore;
-                                bestOffer = o;
-                            }
-                        }
-
-
+                        bestOffer = logic.chooseBest(response.getSender(), offers);
                     } catch (Codec.CodecException e) {
                         e.printStackTrace();
                     } catch (OntologyException e) {
@@ -400,13 +340,16 @@ public class BookTrader extends Agent {
                             getContentManager().fillContent(acc, ch);
                             acceptances.add(acc);
 
-                            for(Offer o : offers)
-                                history.logBuyFrom(o, o.equals(bestOffer));
+                            for(Offer o : offers) {
+                                logic.logBuyFrom(response.getSender(), o, o.equals(bestOffer)); // @todo is it OK like this?
+                            }
                         }
                         else
                         {
-                            for(Offer o : offers)
-                                history.logBuyFrom(o, false);
+                            for(Offer o : offers) {
+                                logic.logBuyFrom(response.getSender(), o, false);
+                            }
+
                             ACLMessage acc = response.createReply();
                             acc.setPerformative(ACLMessage.REJECT_PROPOSAL);
                             acceptances.add(acc);
@@ -457,8 +400,7 @@ public class BookTrader extends Agent {
                     dfd.addServices(sd);
 
                     DFAgentDescription[] envs = DFService.search(myAgent, cfp.getSender(), dfd);
-
-                    Offer ourOffer = logic.makeOffer(envs[0], smb);
+                    Offer ourOffer = logic.makeOffer(envs[0].getName(), smb);
 
                     ArrayList<Offer> offers = new ArrayList<Offer>();
                     offers.add(ourOffer);
@@ -517,7 +459,7 @@ public class BookTrader extends Agent {
 
                     for(Offer o : cf.getOffers())
                     {
-                        history.logSellTo(o, c.getOffer().equals(o));
+                        logic.logSellTo(cfp.getSender(), o, c.getOffer().equals(o));
                     }
 
                     ServiceDescription sd = new ServiceDescription();
@@ -558,10 +500,9 @@ public class BookTrader extends Agent {
             protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
                 try {
                     ChooseFrom cf = (ChooseFrom) getContentManager().extractContent(propose);
-
                     for(Offer o : cf.getOffers())
                     {
-                        history.logSellTo(o, false);
+                        logic.logSellTo(cfp.getSender(), o, false);
                     }
 
                 } catch (UngroundedException e) {
@@ -588,8 +529,6 @@ public class BookTrader extends Agent {
                     ACLMessage getMyInfo = new ACLMessage(ACLMessage.REQUEST);
                     getMyInfo.setLanguage(codec.getName());
                     getMyInfo.setOntology(onto.getName());
-
-
 
                     ServiceDescription sd = new ServiceDescription();
                     sd.setType("environment");

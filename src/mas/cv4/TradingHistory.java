@@ -8,6 +8,7 @@ import jade.content.onto.OntologyException;
 import jade.content.onto.UngroundedException;
 import jade.content.onto.basic.Action;
 import jade.content.onto.basic.Result;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.TickerBehaviour;
@@ -47,7 +48,7 @@ public class TradingHistory {
      * Buy some book(s) from the other agent who requested them fo rsome price which would be a nice profit for me.
      * - I can be sure that I own all of the books in the request at the moment
      */
-    public Offer makeOffer(SellMeBooks request) {
+    public Offer makeOffer(SellMeBooks request, List<Goal> goals) {
         // @todo
         return null;
     }
@@ -60,11 +61,4 @@ public class TradingHistory {
         // @todo
         return false;
     }
-
-    /** we can choose only one offer -> choose the one with highest rating if shouldAccept returns true for more than one */
-    public double rateOffer(Offer o) {
-        // @todo
-        return 0;
-    }
-
 }
