@@ -133,11 +133,11 @@ public class BookTrader extends Agent {
 
 
                     // all the traders must be registered by now
-                    ServiceDescription sd = new ServiceDescription();
-                    sd.setType("book-trader");
-                    DFAgentDescription dfd = new DFAgentDescription();
-                    dfd.addServices(sd);
-                    DFAgentDescription[] traders = DFService.search(myAgent, dfd);
+                    ServiceDescription _sd = new ServiceDescription();
+                    _sd.setType("book-trader");
+                    DFAgentDescription _dfd = new DFAgentDescription();
+                    dfd.addServices(_sd);
+                    DFAgentDescription[] traders = DFService.search(myAgent, _dfd);
 
                     logic = new TradingLogic(ai, traders);
 

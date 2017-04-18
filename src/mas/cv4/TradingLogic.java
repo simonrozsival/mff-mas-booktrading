@@ -1,6 +1,26 @@
 package mas.cv4;
 
+import jade.content.ContentElement;
+import jade.content.lang.Codec;
+import jade.content.lang.sl.SLCodec;
+import jade.content.onto.Ontology;
+import jade.content.onto.OntologyException;
+import jade.content.onto.UngroundedException;
+import jade.content.onto.basic.Action;
+import jade.content.onto.basic.Result;
+import jade.core.Agent;
+import jade.core.behaviours.Behaviour;
+import jade.core.behaviours.TickerBehaviour;
+import jade.domain.DFService;
+import jade.domain.FIPAAgentManagement.*;
+import jade.domain.FIPAException;
+import jade.domain.FIPAService;
+import jade.lang.acl.ACLMessage;
+import jade.lang.acl.MessageTemplate;
+import jade.proto.*;
 import mas.cv4.onto.*;
+
+import java.util.*;
 
 public class TradingLogic {
 
@@ -35,11 +55,11 @@ public class TradingLogic {
     }
     
     public void logSellTo(DFAgentDescription agent, Offer offer, boolean accepted) {
-        traders[agent].logSellTo(offer, accepted);
+        traders.get(agent).logSellTo(offer, accepted);
     }
 
     public void logBuyFrom(DFAgentDescription agent, Offer offer, boolean accepted) {
-        traders[agent].logBuyFrom(offer, accepted);
+        traders.get(agent).logBuyFrom(offer, accepted);
     }
 
     /**
@@ -59,7 +79,7 @@ public class TradingLogic {
         }
 
         ArrayList<BookInfo> myBooks = ai.getBooks();
-        return traders[agent].makeOffer(request, myBooks);
+        return traders.get(agent).makeOffer(request);
     }
 
     /**
