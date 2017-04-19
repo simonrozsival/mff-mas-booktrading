@@ -8,6 +8,7 @@ import jade.content.onto.OntologyException;
 import jade.content.onto.UngroundedException;
 import jade.content.onto.basic.Action;
 import jade.content.onto.basic.Result;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.TickerBehaviour;
@@ -293,6 +294,7 @@ public class BookTrader extends Agent {
 
                 //we need to accept only one offer, otherwise we create two transactions with the same ID
                 Offer bestOffer = null;
+                System.out.println("handling proposals!");
 
                 while (it.hasNext()) {
                     ACLMessage response = (ACLMessage)it.next();
@@ -306,6 +308,10 @@ public class BookTrader extends Agent {
                         ChooseFrom cf = (ChooseFrom)ce;
                         ArrayList<Offer> offers = cf.getOffers();
                         bestOffer = logic.chooseBest(response.getSender(), offers);
+                        if(bestOffer == null)
+                            System.out.println("  bestOffer is null out of " + offers.size());
+                        else
+                            System.out.println("  bestOffer chosen");
                     } catch (Codec.CodecException e) {
                         e.printStackTrace();
                     } catch (OntologyException e) {
@@ -329,6 +335,7 @@ public class BookTrader extends Agent {
 
                         if(offers.contains(bestOffer))
                         {
+                            System.out.println("  accepting best offer!");
                             ACLMessage acc = response.createReply();
                             acc.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                             Chosen ch = new Chosen();
@@ -390,20 +397,23 @@ public class BookTrader extends Agent {
 
                 try {
                     Action ac = (Action)getContentManager().extractContent(cfp);
-
                     SellMeBooks smb = (SellMeBooks)ac.getAction();
+                    AID sender = ac.getActor();
+                    //ServiceDescription sd = new ServiceDescription();
+                    //sd.setType("book-trader");
+                    //DFAgentDescription dfd = new DFAgentDescription();
+                    //dfd.addServices(sd);
 
-
-                    ServiceDescription sd = new ServiceDescription();
-                    sd.setType("environment");
-                    DFAgentDescription dfd = new DFAgentDescription();
-                    dfd.addServices(sd);
-
-                    DFAgentDescription[] envs = DFService.search(myAgent, cfp.getSender(), dfd);
-                    Offer ourOffer = logic.makeOffer(envs[0].getName(), smb);
-
+                    //DFAgentDescription[] envs = DFService.search(myAgent, dfd);
+                    Offer ourOffer = logic.makeOffer(sender, smb);
                     ArrayList<Offer> offers = new ArrayList<Offer>();
+                    if (ourOffer == null)  {
+                        return null;
+                        //throw new RefuseException("");
+                    }
+
                     offers.add(ourOffer);
+
                     ChooseFrom cf = new ChooseFrom();
                     cf.setOffers(offers);
                     cf.setWillSell(myBooks);
@@ -413,6 +423,7 @@ public class BookTrader extends Agent {
                     reply.setPerformative(ACLMessage.PROPOSE);
                     reply.setReplyByDate(new Date(System.currentTimeMillis() + 5000));
                     getContentManager().fillContent(reply, cf);
+                    System.out.println("    sending proposal");
 
                     return reply;
                 } catch (UngroundedException e) {
@@ -420,8 +431,6 @@ public class BookTrader extends Agent {
                 } catch (Codec.CodecException e) {
                     e.printStackTrace();
                 } catch (OntologyException e) {
-                    e.printStackTrace();
-                } catch (FIPAException e) {
                     e.printStackTrace();
                 }
 

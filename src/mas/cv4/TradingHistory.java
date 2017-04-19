@@ -51,6 +51,12 @@ public class TradingHistory {
         Offer offer = new Offer();
         offer.setBooks(request.getBooks());
         offer.setMoney(calculateMinimumPriceFor(request.getBooks(), goals) * 0.9); // pay a little less than would be minimum...
+
+        System.out.println("    calculated offer:");
+        for(BookInfo b : offer.getBooks())
+            System.out.println("        offering: " + b.getBookName());
+        System.out.println("        for " + offer.getMoney());
+
         return offer;
     }
 

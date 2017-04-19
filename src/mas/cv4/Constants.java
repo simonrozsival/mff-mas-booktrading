@@ -21,6 +21,7 @@ public class Constants {
         bookPrices.put("The Husband's Secretes", 90.0);
         bookPrices.put("Grain Brain", 150.0);
         bookPrices.put("Shadow Spell", 40.0);
+        bookPrices.put("Lotr", 40.0);
     }
 
     public static double getPrice(String bookName) {

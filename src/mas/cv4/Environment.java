@@ -109,6 +109,7 @@ public class Environment extends Agent {
                 booksNames.addAll(Constants.getBooknames());
                 int bID = 0;
 
+                int money = 400;
                 //generate goals and books for each agent
                 for (DFAgentDescription tr : traders) {
 
@@ -118,14 +119,14 @@ public class Environment extends Agent {
                     ArrayList<Goal> goal = new ArrayList<Goal>();
 
 
-                    for (int i = 0; i < 4; i++) {
+                    for (int i = 0; i < 6; i++) {
                         BookInfo bi = new BookInfo();
                         bi.setBookID(bID++);
                         bi.setBookName(booksNames.get(i));
                         books.add(bi);
                     }
 
-                    for (int i = 4; i < booksNames.size(); i++) {
+                    for (int i = 6; i < booksNames.size(); i++) {
                         BookInfo bi = new BookInfo();
                         bi.setBookID(bID++);
                         bi.setBookName(booksNames.get(i));
@@ -137,7 +138,8 @@ public class Environment extends Agent {
 
                     ai.setBooks(books);
                     ai.setGoals(goal);
-                    ai.setMoney(400);
+                    ai.setMoney(money);
+                    money++;
 
                     System.out.println("Created goals for: " + tr.getName().getName());
                     System.out.println("\t" + ai.toString());
