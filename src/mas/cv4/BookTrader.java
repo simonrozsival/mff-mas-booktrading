@@ -455,6 +455,7 @@ public class BookTrader extends Agent {
 
                     offers.add(ourOffer);
 
+
                     ChooseFrom cf = new ChooseFrom();
                     cf.setOffers(offers);
                     cf.setWillSell(sellBooks);
