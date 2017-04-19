@@ -8,6 +8,7 @@ import jade.content.onto.OntologyException;
 import jade.content.onto.UngroundedException;
 import jade.content.onto.basic.Action;
 import jade.content.onto.basic.Result;
+import jade.core.AID;
 import jade.core.Agent;
 import jade.core.behaviours.Behaviour;
 import jade.core.behaviours.TickerBehaviour;
@@ -390,20 +391,22 @@ public class BookTrader extends Agent {
 
                 try {
                     Action ac = (Action)getContentManager().extractContent(cfp);
-
                     SellMeBooks smb = (SellMeBooks)ac.getAction();
+                    AID sender = ac.getActor();
+                    //ServiceDescription sd = new ServiceDescription();
+                    //sd.setType("book-trader");
+                    //DFAgentDescription dfd = new DFAgentDescription();
+                    //dfd.addServices(sd);
 
-
-                    ServiceDescription sd = new ServiceDescription();
-                    sd.setType("environment");
-                    DFAgentDescription dfd = new DFAgentDescription();
-                    dfd.addServices(sd);
-
-                    DFAgentDescription[] envs = DFService.search(myAgent, cfp.getSender(), dfd);
-                    Offer ourOffer = logic.makeOffer(envs[0].getName(), smb);
-
+                    //DFAgentDescription[] envs = DFService.search(myAgent, dfd);
+                    Offer ourOffer = logic.makeOffer(sender, smb);
                     ArrayList<Offer> offers = new ArrayList<Offer>();
+                    if (ourOffer == null)  {
+                    	throw new RefuseException("");
+                    }
+                    
                     offers.add(ourOffer);
+                    
                     ChooseFrom cf = new ChooseFrom();
                     cf.setOffers(offers);
                     cf.setWillSell(myBooks);
@@ -421,9 +424,7 @@ public class BookTrader extends Agent {
                     e.printStackTrace();
                 } catch (OntologyException e) {
                     e.printStackTrace();
-                } catch (FIPAException e) {
-                    e.printStackTrace();
-                }
+                } 
 
                 throw new FailureException("");
             }
