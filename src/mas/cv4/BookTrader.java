@@ -430,19 +430,34 @@ public class BookTrader extends Agent {
                     //DFAgentDescription dfd = new DFAgentDescription();
                     //dfd.addServices(sd);
 
+                    ArrayList<BookInfo> books = smb.getBooks();
+                    ArrayList<BookInfo> sellBooks = new ArrayList<BookInfo>();
+                    //find out, if we have books the agent wants
+                    for (int i = 0; i < books.size(); i++) {
+                        boolean found = false;
+                        for (int j = 0; j < myBooks.size(); j++) {
+                            if (myBooks.get(j).getBookName().equals(books.get(i).getBookName())) {
+                                sellBooks.add(myBooks.get(j));
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                            throw new RefuseException("");
+                    }
+
                     //DFAgentDescription[] envs = DFService.search(myAgent, dfd);
                     Offer ourOffer = logic.makeOffer(sender, smb);
                     ArrayList<Offer> offers = new ArrayList<Offer>();
                     if (ourOffer == null)  {
-                        return null;
-                        //throw new RefuseException("");
+                        throw new RefuseException("");
                     }
 
                     offers.add(ourOffer);
 
                     ChooseFrom cf = new ChooseFrom();
                     cf.setOffers(offers);
-                    cf.setWillSell(myBooks);
+                    cf.setWillSell(sellBooks);
 
                     //send the offers
                     ACLMessage reply = cfp.createReply();
