@@ -293,8 +293,9 @@ public class BookTrader extends Agent {
                 Iterator it = responses.iterator();
 
                 //we need to accept only one offer, otherwise we create two transactions with the same ID
-                Offer bestOffer = null;
-                System.out.println("handling proposals!");
+                Offer theBest = null;
+                List<Offer> bestOffer = new ArrayList<Offer>();
+                //System.out.println("handling proposals!");
 
                 while (it.hasNext()) {
                     ACLMessage response = (ACLMessage)it.next();
@@ -307,11 +308,13 @@ public class BookTrader extends Agent {
                         ce = getContentManager().extractContent(response);
                         ChooseFrom cf = (ChooseFrom)ce;
                         ArrayList<Offer> offers = cf.getOffers();
-                        bestOffer = logic.chooseBest(response.getSender(), offers);
-                        if(bestOffer == null)
-                            System.out.println("  bestOffer is null out of " + offers.size());
-                        else
-                            System.out.println("  bestOffer chosen");
+                        bestOffer.add(logic.chooseBest(response.getSender(), offers));
+                        if(bestOffer == null) {
+                            //System.out.println("  bestOffer is null out of " + offers.size());
+                        }
+                        else {
+                            //System.out.println("  bestOffer chosen");
+                        }
                     } catch (Codec.CodecException e) {
                         e.printStackTrace();
                     } catch (OntologyException e) {
@@ -319,6 +322,8 @@ public class BookTrader extends Agent {
                     }
 
                 }
+
+                theBest = logic.chooseBestOne(bestOffer);
 
                 it = responses.iterator();
                 while (it.hasNext()) {
@@ -333,13 +338,31 @@ public class BookTrader extends Agent {
                         ChooseFrom cf = (ChooseFrom)ce;
                         ArrayList<Offer> offers = cf.getOffers();
 
-                        if(offers.contains(bestOffer))
+                        Chosen ch = new Chosen();
+                        boolean isHis = false;
+                        for(Offer o : offers) {
+                            //System.out.println("  comparing " + theBest.getBooks().get(0) + " " + o.getBooks().get(0));
+                            boolean eq = true;
+                            eq = theBest.getMoney() == o.getMoney() ? eq : false;
+                            eq = theBest.getBooks().size() == o.getBooks().size() ? eq : false;
+                            if(eq)
+                                for(int i = 0; i < theBest.getBooks().size(); i++)
+                                    eq = theBest.getBooks().get(i).getBookName().equals(o.getBooks().get(i).getBookName()) ? eq : false;
+                            if (eq) {
+                                isHis = true;
+                                //System.out.println("    succeeded");
+                            }
+                            else {
+                                //System.out.println("    failed");
+                            }
+                            if(isHis)
+                                ch.setOffer(o);
+                        }
+                        if(isHis)
                         {
-                            System.out.println("  accepting best offer!");
+                            System.out.println("  #### ACCEPTING best offer!");
                             ACLMessage acc = response.createReply();
                             acc.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                            Chosen ch = new Chosen();
-                            ch.setOffer(bestOffer);
 
                             c=ch;
                             shouldReceive = cf.getWillSell();
@@ -353,7 +376,10 @@ public class BookTrader extends Agent {
                         }
                         else
                         {
+                            //System.out.println("  #### refusing offer - not found");
+                            //System.out.println("  best:" + theBest.toString());
                             for(Offer o : offers) {
+                                //System.out.println("  " + o.toString());
                                 logic.logBuyFrom(response.getSender(), o, false);
                             }
 
@@ -423,7 +449,7 @@ public class BookTrader extends Agent {
                     reply.setPerformative(ACLMessage.PROPOSE);
                     reply.setReplyByDate(new Date(System.currentTimeMillis() + 5000));
                     getContentManager().fillContent(reply, cf);
-                    System.out.println("    sending proposal");
+                    //System.out.println("    sending proposal");
 
                     return reply;
                 } catch (UngroundedException e) {
@@ -441,6 +467,7 @@ public class BookTrader extends Agent {
             protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose, ACLMessage accept) throws FailureException {
 
                 try {
+                    //System.out.println("  #### HANDLING ACCEPT!");
                     ChooseFrom cf = (ChooseFrom)getContentManager().extractContent(propose);
 
                     //prepare the transaction info and send it to the environment

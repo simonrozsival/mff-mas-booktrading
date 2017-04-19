@@ -70,7 +70,7 @@ public class TradingLogic {
      * Choose book(s) which I could request from the other agents.
      */
     public SellMeBooks makeRequest() {
-        System.out.println(ai.getMoney() + "making request");
+        //System.out.println(ai.getMoney() + "making request");
         ArrayList<BookInfo> bis = new ArrayList<BookInfo>();
         List<Goal> myGoal = ai.getGoals();
 
@@ -92,7 +92,7 @@ public class TradingLogic {
         if (!shouldEvenConsider(request)) {
             return null;
         }
-        System.out.println(ai.getMoney() + "making offer: ");
+        //System.out.println(ai.getMoney() + "making offer: ");
 
         return traders.get(agent).makeOffer(request, ai.getGoals());
     }
@@ -101,11 +101,13 @@ public class TradingLogic {
      * Look whether I even have the books which are requested and whether I can fulfill the offer.
      */
     private boolean shouldEvenConsider(SellMeBooks request) {
-        System.out.println(ai.getMoney() + "got sellmebook request (considering): " + request.toString());
-        for(BookInfo b : ai.getBooks())
-            System.out.println(ai.getMoney() + "    my:  " + b.getBookName());
-        for(BookInfo b : request.getBooks())
-            System.out.println(ai.getMoney() + "    his: " + b.getBookName());
+        //System.out.println(ai.getMoney() + "got sellmebook request (considering): " + request.toString());
+        for(BookInfo b : ai.getBooks()) {
+            //System.out.println(ai.getMoney() + "    my:  " + b.getBookName());
+        }
+        for(BookInfo b : request.getBooks()) {
+            //System.out.println(ai.getMoney() + "    his: " + b.getBookName());
+        }
 
         ArrayList<BookInfo> myBooks = ai.getBooks();
         ArrayList<BookInfo> books = request.getBooks();
@@ -120,13 +122,29 @@ public class TradingLogic {
             }
 
             if (!found) {
-                System.out.println(ai.getMoney() + "  refusing");
+                //System.out.println(ai.getMoney() + "  refusing");
                 return false;
             }
         }
 
-        System.out.println(ai.getMoney() + "  considering");
+        //System.out.println(ai.getMoney() + "  considering");
         return true;
+    }
+
+    public Offer chooseBestOne(List<Offer> offers) {
+        double bestScore = 0;
+        Offer bestOffer = null;
+
+        for (Offer o: offers) {
+            double offerScore = calculateProfit(o);
+
+            if(bestOffer == null || offerScore > bestScore) {
+                bestScore = offerScore;
+                bestOffer = o;
+            }
+        }
+
+        return bestOffer;
     }
 
     /**
@@ -137,39 +155,44 @@ public class TradingLogic {
      */
     public Offer chooseBest(AID agent, List<Offer> offers) {
         //find out which offers we can fulfill (we have all requested books and enough money)
-        List<Offer> canFulfill = canFulfill(offers);
+        //List<Offer> canFulfill = canFulfill(offers);
+        List<Offer> canFulfill = offers;
         boolean chosen = false;
         double bestScore = 0;
         Offer bestOffer = null;
 
         System.out.println(ai.getMoney() + "choosing best:");
-        System.out.println(ai.getMoney() + "  out of:");
+        //System.out.println(ai.getMoney() + "  out of:");
         for(Offer o : offers) {
-            System.out.println(ai.getMoney() + "    -");
-            for(BookInfo b : o.getBooks())
-            System.out.println(ai.getMoney() + "      his: " + b.getBookName());
-            System.out.println(ai.getMoney() + "      for money: " + o.getMoney());
+            //System.out.println(ai.getMoney() + "    -");
+            for(BookInfo b : o.getBooks()) {
+                //System.out.println(ai.getMoney() + "      his: " + b.getBookName());
+                //System.out.println(ai.getMoney() + "      for money: " + o.getMoney());
+            }
         }
 
 
         for (Offer o: canFulfill) {
+            boolean shouldTake = shouldAccept(agent, o);
             double offerScore = calculateProfit(o);
-            System.out.println(ai.getMoney() + "  considering with profit " + offerScore);
+            //System.out.println(ai.getMoney() + "  considering with profit " + offerScore + " should Accept = " + shouldTake);
             for(BookInfo b : o.getBooks())
-                System.out.println(ai.getMoney() + "    his: " + b.getBookName());
-            System.out.println(ai.getMoney() + "    for money: " + o.getMoney());
+                //System.out.println(ai.getMoney() + "    his: " + b.getBookName());
+            //System.out.println(ai.getMoney() + "    for money: " + o.getMoney());
 
-            if(shouldAccept(agent, o) && (!chosen || offerScore > bestScore)) {
+            if(shouldTake && (!chosen || offerScore > bestScore)) {
                 chosen = true;
                 bestScore = offerScore;
                 bestOffer = o;
             }
         }
 
-        if(bestOffer == null)
-            System.out.println(ai.getMoney() + "  no offer chosen");
-        else
-        System.out.println(ai.getMoney() + "chosen offer: " + bestOffer.toString() + " with score " + bestScore);
+        if(bestOffer == null) {
+            //System.out.println(ai.getMoney() + "  no offer chosen");
+        }
+        else{
+            //System.out.println(ai.getMoney() + "chosen offer: " + bestOffer.toString() + " with score " + bestScore);
+        }
         return bestOffer;
     }
 
@@ -182,10 +205,10 @@ public class TradingLogic {
         List<Offer> canFulfill = new ArrayList<Offer>();
         List<BookInfo> myBooks = ai.getBooks();
 
-        System.out.println(ai.getMoney() + "==== canFullfill");
+        //System.out.println(ai.getMoney() + "==== canFullfill");
         for (Offer o: offers) {
             if (o.getMoney() > ai.getMoney()) {
-                System.out.println(ai.getMoney() + "  not enough money");
+                //System.out.println(ai.getMoney() + "  not enough money");
                 continue;
             }
 
@@ -195,40 +218,42 @@ public class TradingLogic {
                     String bn = bi.getBookName();
                     boolean found = false;
                     for (int j = 0; j < myBooks.size(); j++) {
-                        System.out.println(ai.getMoney() + "  trying: " + myBooks.get(j).getBookName());
+                        //System.out.println(ai.getMoney() + "  trying: " + myBooks.get(j).getBookName() + " == " + bn);
                         if (myBooks.get(j).getBookName().equals(bn)) {
-                            System.out.println(ai.getMoney() + "    found");
+                            //System.out.println(ai.getMoney() + "    found");
                             found = true;
                             bi.setBookID(myBooks.get(j).getBookID());
                             break;
                         }
                     }
                     if (!found) {
-                        System.out.println(ai.getMoney() + "    not found: " + bn);
+                        //System.out.println(ai.getMoney() + "    not found: " + bn);
                         foundAll = false;
                         break;
                     }
                 }
 
             if (foundAll) {
-                System.out.println(ai.getMoney() + "found all");
+                //System.out.println(ai.getMoney() + "found all");
                 canFulfill.add(o);
             }
-            else
-                System.out.println(ai.getMoney() + "not found all");
+            else {
+                //System.out.println(ai.getMoney() + "not found all");
+            }
         }
-        System.out.println(ai.getMoney() + "---- canFullfill");
+        //System.out.println(ai.getMoney() + "---- canFullfill");
 
         return canFulfill;
     }
 
+    //TODO: IMPORTANT - remove the true!
 
     /**
      * I requested some books and the other agent wants to sell me the books for some price.
      * Should I accept the offer??
      */
     private boolean shouldAccept(AID agent, Offer offer) {
-        return traders.get(agent).shouldAccept(offer, ai.getGoals(), calculateProfit(offer));
+        return true || traders.get(agent).shouldAccept(offer, ai.getGoals(), calculateProfit(offer));
     }
 
     /**
