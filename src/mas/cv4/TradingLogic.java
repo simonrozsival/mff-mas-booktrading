@@ -155,28 +155,30 @@ public class TradingLogic {
      */
     public Offer chooseBest(AID agent, List<Offer> offers) {
         //find out which offers we can fulfill (we have all requested books and enough money)
-        //List<Offer> canFulfill = canFulfill(offers);
-        List<Offer> canFulfill = offers;
+        List<Offer> canFulfill = canFulfill(offers);
+
         boolean chosen = false;
         double bestScore = 0;
         Offer bestOffer = null;
 
         System.out.println(ai.getMoney() + "choosing best:");
         //System.out.println(ai.getMoney() + "  out of:");
-        for(Offer o : offers) {
+        /*for(Offer o : offers) {
             //System.out.println(ai.getMoney() + "    -");
             for(BookInfo b : o.getBooks()) {
                 //System.out.println(ai.getMoney() + "      his: " + b.getBookName());
                 //System.out.println(ai.getMoney() + "      for money: " + o.getMoney());
             }
-        }
+        }*/
 
 
         for (Offer o: canFulfill) {
+            if (o == null) continue;
+            if (o.getBooks() == null) continue;
             boolean shouldTake = shouldAccept(agent, o);
             double offerScore = calculateProfit(o);
             //System.out.println(ai.getMoney() + "  considering with profit " + offerScore + " should Accept = " + shouldTake);
-            for(BookInfo b : o.getBooks())
+            //for(BookInfo b : o.getBooks())
                 //System.out.println(ai.getMoney() + "    his: " + b.getBookName());
             //System.out.println(ai.getMoney() + "    for money: " + o.getMoney());
 
@@ -253,7 +255,7 @@ public class TradingLogic {
      * Should I accept the offer??
      */
     private boolean shouldAccept(AID agent, Offer offer) {
-        return true || traders.get(agent).shouldAccept(offer, ai.getGoals(), calculateProfit(offer));
+        return traders.get(agent).shouldAccept(offer, ai.getGoals(), calculateProfit(offer));
     }
 
     /**

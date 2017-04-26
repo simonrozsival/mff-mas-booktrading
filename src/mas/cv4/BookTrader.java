@@ -343,6 +343,9 @@ public class BookTrader extends Agent {
                         Chosen ch = new Chosen();
                         boolean isHis = false;
                         for(Offer o : offers) {
+                            if (theBest == null) break;
+                            if (o == null) continue;
+                            if (o.getBooks() == null) continue;
                             //System.out.println("  comparing " + theBest.getBooks().get(0) + " " + o.getBooks().get(0));
                             boolean eq = true;
                             eq = theBest.getMoney() == o.getMoney() ? eq : false;
@@ -373,6 +376,8 @@ public class BookTrader extends Agent {
                             acceptances.add(acc);
 
                             for(Offer o : offers) {
+                                if (o == null) continue;
+                                if (o.getBooks() == null) continue;
                                 logic.logBuyFrom(response.getSender(), o, o.equals(bestOffer)); // @todo is it OK like this?
                             }
                         }
@@ -381,6 +386,8 @@ public class BookTrader extends Agent {
                             //System.out.println("  #### refusing offer - not found");
                             //System.out.println("  best:" + theBest.toString());
                             for(Offer o : offers) {
+                                if (o == null) continue;
+                                if (o.getBooks() == null) continue;
                                 //System.out.println("  " + o.toString());
                                 logic.logBuyFrom(response.getSender(), o, false);
                             }
@@ -456,6 +463,7 @@ public class BookTrader extends Agent {
                     }
                     
                     offers.add(ourOffer);
+
                     
                     ChooseFrom cf = new ChooseFrom();
                     cf.setOffers(offers);
@@ -512,6 +520,7 @@ public class BookTrader extends Agent {
 
                     for(Offer o : cf.getOffers())
                     {
+                        if (o == null) continue;
                         logic.logSellTo(cfp.getSender(), o, c.getOffer().equals(o));
                     }
 
@@ -555,6 +564,7 @@ public class BookTrader extends Agent {
                     ChooseFrom cf = (ChooseFrom) getContentManager().extractContent(propose);
                     for(Offer o : cf.getOffers())
                     {
+                        if (o == null) continue;
                         logic.logSellTo(cfp.getSender(), o, false);
                     }
 
