@@ -450,12 +450,11 @@ public class BookTrader extends Agent {
                     Offer ourOffer = logic.makeOffer(sender, smb);
                     ArrayList<Offer> offers = new ArrayList<Offer>();
                     if (ourOffer == null)  {
-                        throw new RefuseException("");
+                    	throw new RefuseException("");
                     }
-
+                    
                     offers.add(ourOffer);
-
-
+                    
                     ChooseFrom cf = new ChooseFrom();
                     cf.setOffers(offers);
                     cf.setWillSell(sellBooks);

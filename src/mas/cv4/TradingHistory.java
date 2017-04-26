@@ -27,10 +27,12 @@ public class TradingHistory {
 
     private ArrayList<Pair<Offer, Boolean>> sold;
     private ArrayList<Pair<Offer, Boolean>> bought;
-
+    private HashMap<String, Double> buyPrices; //ceny, za kolik jsem nejakou knihu koupil -> levneji prodavat nechci - TODO zatim nepouzite
+    
     public TradingHistory() {
         sold = new ArrayList<>();
         bought = new ArrayList<>();
+        buyPrices = new HashMap<>();
     }
 
     public void logSellTo(Offer offer, Boolean accepted) {
@@ -40,10 +42,19 @@ public class TradingHistory {
     
     public void logBuyFrom(Offer offer, Boolean accepted) {
         bought.add(new Pair<>(offer, accepted));
+        List<BookInfo> books = offer.getBooks();
+        double TotVal = 0;
+        for (BookInfo book : books) {
+        	TotVal += Constants.getPrice(book.getBookName());
+        }
+        double coef = offer.getMoney() / TotVal;
+        for (BookInfo book : books) {
+        	buyPrices.put(book.getBookName(), Constants.getPrice(book.getBookName())*coef);
+        }
     }
 
     /**
-     * Buy some book(s) from the other agent who requested them fo rsome price which would be a nice profit for me.
+     * Buy some book(s) from the other agent who requested them for some price which would be a nice profit for me.
      * - I can be sure that I own all of the books in the request at the moment
      */
     public Offer makeOffer(SellMeBooks request, List<Goal> goals) {
@@ -82,7 +93,7 @@ public class TradingHistory {
             }
 
             // how much would I pay for the book?
-            price += myGoal == null ? 50. : myGoal.getValue(); // @todo 50 is a weird constant
+            price += myGoal == null ? Constants.getPrice(book.getBookName())-32 : myGoal.getValue() + 1.8; // @todo 32 is a weird constant
         }
 
         return price;
