@@ -308,7 +308,9 @@ public class BookTrader extends Agent {
                         ce = getContentManager().extractContent(response);
                         ChooseFrom cf = (ChooseFrom)ce;
                         ArrayList<Offer> offers = cf.getOffers();
-                        bestOffer.add(logic.chooseBest(response.getSender(), offers));
+                        Offer candidate = logic.chooseBest(response.getSender(), offers);
+                        if(candidate != null)
+                            bestOffer.add(candidate);
                         if(bestOffer == null) {
                             //System.out.println("  bestOffer is null out of " + offers.size());
                         }
